@@ -24,6 +24,7 @@ That design decision affected several parts of the pipeline:
 - the loss function must be **`BCEWithLogitsLoss`**
 - prediction logic must use **`sigmoid` + threshold**
 - class imbalance must be handled per class using **`pos_weight`**
+- Increasing training efficiency using Torchvision v2, Nvidia DALI to shift image transforms and augmentation operations to GPU to avoid CPU bottle necking
 
 ---
 
