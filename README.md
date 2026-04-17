@@ -114,6 +114,7 @@ Without optimization:
 
 
 With Optimization:
+--batch-size 64 --num-workers 4 --epochs 1 --val-fraction 0.1 --test-fraction 0.1 --lr 0.001 --pretrained
 
 [Training] Epoch 1:
         Step 64/1227 - Loss: 1.293 | Acc: 55.13% | Time Elapsed: 0.87Mins | Avg Time Per Image: 0.82Secs
