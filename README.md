@@ -272,5 +272,12 @@ Validation accuracy: [75.67548500881834, 77.08563590045071, 76.12972761120909, 8
         Test Accuracy: 85.11%
 
 
+Results:
+<img width="869" height="734" alt="image" src="https://github.com/user-attachments/assets/17f4c0c1-9933-4a24-a253-b0190a339f67" />
+<img width="731" height="475" alt="image" src="https://github.com/user-attachments/assets/2de25786-0b0d-4a21-abeb-c6a8c7761196" />
+
+
+
+
 
 
