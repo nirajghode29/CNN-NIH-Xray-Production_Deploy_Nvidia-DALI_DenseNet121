@@ -1,88 +1,90 @@
-This project builds a deep learning pipeline for **multi-label classification** on the **NIH Chest X-ray dataset** using **PyTorch** and a **pretrained DenseNet121** backbone.
+# Deployment NIH Chest X-ray Multi-Label Classification Project
 
-The main goal was to create a clean and practical training pipeline that covers:
+This project builds an end-to-end deep learning pipeline for **multi-label chest X-ray classification** using the **NIH Chest X-ray dataset**, **PyTorch**, and transfer learning with **pretrained CNN architectures**.
 
-- dataset preparation - Creating **DataPipeline**
+The goal was not only to train an accurate model, but also to build a practical and production-oriented workflow covering:
+
+- dataset preparation
 - preprocessing and augmentation
 - train/validation/test splitting
-- **DataLoader Pipeline setup**
 - class imbalance handling
-- DenseNet121 fine-tuning for multi-label prediction
+- comparison of multiple deep learning models
+- training optimization for faster performance
+- GPU-accelerated data loading and augmentation using **NVIDIA DALI**
+- evaluation using multiple performance metrics
+- deployment of the trained model using **FastAPI** ![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
 
 ---
 
 ## 1. Project Overview
 
-The NIH Chest X-ray dataset contains chest X-ray images where a single image can have **multiple disease findings at the same time**.
+The NIH Chest X-ray dataset is a **multi-label medical imaging dataset**, where a single X-ray image can contain **multiple disease findings at the same time**.
 
-Because of that, this is a **multi-label classification problem**, not a single-label classification problem.
+Because of this, the problem is different from standard single-label image classification:
 
-That design decision affected several parts of the pipeline:
+- each image must be represented by a **multi-hot encoded label vector**
+- the model must output **one score per disease class**
+- training requires **`BCEWithLogitsLoss`** instead of cross-entropy loss
+- predictions are generated using **sigmoid activation + thresholding**
+- class imbalance must be handled carefully, since some findings appear far less frequently than others
 
-- labels must be stored as **multi-hot vectors**
-- the model output layer must produce one score per class
-- the loss function must be **`BCEWithLogitsLoss`**
-- prediction logic must use **`sigmoid` + threshold**
-- class imbalance must be handled per class using **`pos_weight`**
-- Increasing training efficiency using Torchvision v2, Nvidia DALI to shift image transforms and augmentation operations to GPU to avoid CPU bottle necking
-- NVIDIA DALI improved image transform, augmentation and normalization speed by upto 55% and improved training speed.
+This project focused on both **model performance** and **training efficiency**, which is especially important for large-scale image datasets such as NIH Chest X-ray.
 
 ---
 
 ## 2. Dataset Preparation
 
-A custom PyTorch dataset class was used to load the NIH data.
+A custom PyTorch dataset class was built to load the NIH Chest X-ray data and metadata.
 
-### Dataset Pipeline
+### Dataset pipeline
 
 The custom `NIHDataset` class was designed to:
 
 - read the NIH metadata CSV
 - parse the `Finding Labels` column
-- build a list of all unique classes
-- create label-to-index mappings
-- scan image folders and map image names to full file paths
-- load each image from disk
-- return an image and its corresponding target
+- extract all unique disease classes
+- create `class_to_idx` and `idx_to_class` mappings
+- scan image folders and map each image filename to its full file path
+- load images from disk
+- return the image and corresponding multi-label target vector
 
-### Key internal attributes
+### Useful dataset attributes
 
-The dataset stores useful attributes such as:
+The dataset stores several important attributes:
 
-- `all_labels` → list of all unique disease labels
-- `class_to_idx` → mapping from class name to integer index
+- `all_labels` → list of all disease classes
+- `class_to_idx` → label-to-index mapping
 - `idx_to_class` → reverse mapping
-- `image_paths` → mapping from image file name to its absolute path
+- `image_paths` → image filename to full path mapping
 
-This allowed us to later determine:
+These were later used for:
 
-- number of classes
-- class names
-- class imbalance statistics
+- determining the number of output classes
+- building target vectors
+- computing class frequencies
+- calculating class imbalance weights
 
 ---
 
-## 3. Label Processing
+## 3. Label Processing for Multi-Label Classification
 
-The NIH data is not a regular single-class dataset.
-
-Each image may contain findings like:
+The NIH dataset does not assign only one diagnosis per image.  
+Instead, one image may contain multiple findings such as:
 
 - Atelectasis
-- Infiltration
 - Effusion
+- Infiltration
 - Mass
+- Nodule
 - Pneumonia
 
-and possibly more than one of them at once.
-
-So instead of returning one integer class index, the dataset should return a **multi-hot encoded target vector**.
+So instead of returning a single class index, the dataset returns a **multi-hot encoded vector**.
 
 ### Example
 
-If we had 5 classes:
+If the class list is:
 
-
+```python
 ["Atelectasis", "Cardiomegaly", "Effusion", "Mass", "Nodule"]
 
 
